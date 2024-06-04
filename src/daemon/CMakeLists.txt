@@ -94,5 +94,5 @@ target_link_libraries(daemon
     ${Blocks})
 set_property(TARGET daemon
   PROPERTY
-    OUTPUT_NAME "swapd")
+    OUTPUT_NAME "dogemoned")
 install(TARGETS daemon DESTINATION bin)
