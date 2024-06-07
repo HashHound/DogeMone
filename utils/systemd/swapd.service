@@ -1,5 +1,5 @@
 [Unit]
-Description=Swap Full Node
+Description=Dogemone Full Node
 After=network.target
 
 [Service]

@@ -1299,7 +1299,7 @@ std::string get_nix_version_display_string()
   // calculating sync time estimates
   uint64_t cumulative_block_sync_weight(cryptonote::network_type nettype, uint64_t start_block, uint64_t num_blocks)
   {
-    // Per block sync time is not expected to vary much on Swap Network.
+    // Per block sync time is not expected to vary much on Dogemone Network.
     return num_blocks;
   }
 

@@ -345,7 +345,7 @@ namespace net_utils
 				"apps.info Memory used by user-space applications.\n"
 				"swap.label swap\n"
 				"swap.draw STACK\n"
-				"swap.info Swap space used.\n"
+				"swap.info Dogemone space used.\n"
 				"free.label unused\n"
 				"free.draw STACK\n"
 				"free.info Wasted memory. Memory that is not used for anything at all.\n"

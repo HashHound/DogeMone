@@ -323,7 +323,7 @@ class GTEST_API_ AssertionResult {
     message_->append(a_message.GetString().c_str());
   }
 
-  // Swap the contents of this AssertionResult with other.
+  // Dogemone the contents of this AssertionResult with other.
   void swap(AssertionResult& other);
 
   // Stores result of the assertion predicate.
