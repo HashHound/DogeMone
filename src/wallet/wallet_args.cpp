@@ -95,7 +95,7 @@ namespace wallet_args
     const std::function<void(const std::string&, bool)> &print,
     const char *default_log_name,
     bool log_to_console)
-  
+
   {
     namespace bf = boost::filesystem;
     namespace po = boost::program_options;
@@ -131,7 +131,7 @@ namespace wallet_args
     command_line::add_arg(desc_params, arg_max_concurrency);
     command_line::add_arg(desc_params, arg_config_file);
 
-    i18n_set_language("translations", "swap", lang);
+    i18n_set_language("translations", "dogemone", lang);
 
     po::options_description desc_all;
     desc_all.add(desc_general).add(desc_params);
@@ -145,7 +145,7 @@ namespace wallet_args
       if (command_line::get_arg(vm, command_line::arg_help))
       {
         Print(print) << "Dogemone '" << MONERO_RELEASE_NAME << "' (v" << MONERO_VERSION_FULL << ")" << ENDL;
-        Print(print) << wallet_args::tr("This is the command line swap wallet. It needs to connect to a swap\n"
+        Print(print) << wallet_args::tr("This is the command line dogemone wallet. It needs to connect to a swap\n"
 												  "daemon to work correctly.") << ENDL;
         Print(print) << wallet_args::tr("Usage:") << ENDL << "  " << usage;
         Print(print) << desc_all;

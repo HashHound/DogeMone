@@ -39,7 +39,7 @@ To build translations after modifying them:
 
 To test a translation:
 
-    LANG=es ./build/release/bin/swap-wallet-cli
+    LANG=es ./build/release/bin/dogemone-wallet-cli
 
 To add new translatable strings in the source code:
 

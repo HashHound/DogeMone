@@ -240,7 +240,7 @@ static void init(std::string cache_filename)
   CHECK_AND_ASSERT_THROW_MES(!dbr, "Failed to create LDMB environment: " + std::string(mdb_strerror(dbr)));
   dbr = mdb_env_set_maxdbs(env, 7);
   CHECK_AND_ASSERT_THROW_MES(!dbr, "Failed to set max env dbs: " + std::string(mdb_strerror(dbr)));
-  const std::string actual_filename = get_cache_filename(cache_filename); 
+  const std::string actual_filename = get_cache_filename(cache_filename);
   dbr = mdb_env_open(env, actual_filename.c_str(), flags, 0664);
   CHECK_AND_ASSERT_THROW_MES(!dbr, "Failed to open rings database file '"
       + actual_filename + "': " + std::string(mdb_strerror(dbr)));
@@ -967,7 +967,7 @@ static void open_db(const std::string &filename, MDB_env **env, MDB_txn **txn, M
   dbr = mdb_env_set_maxdbs(*env, 1);
   CHECK_AND_ASSERT_THROW_MES(!dbr, "Failed to set max env dbs: " + std::string(mdb_strerror(dbr)));
   const std::string actual_filename = filename;
-  MINFO("Opening swap blockchain at " << actual_filename);
+  MINFO("Opening dogemone blockchain at " << actual_filename);
   dbr = mdb_env_open(*env, actual_filename.c_str(), flags, 0664);
   CHECK_AND_ASSERT_THROW_MES(!dbr, "Failed to open rings database file '"
       + actual_filename + "': " + std::string(mdb_strerror(dbr)));
@@ -1188,7 +1188,7 @@ int main(int argc, char* argv[])
   const command_line::arg_descriptor<std::vector<std::string> > arg_inputs = {"inputs", "Path to Dogemone DB, and path to any fork DBs"};
   const command_line::arg_descriptor<std::string> arg_db_sync_mode = {
     "db-sync-mode"
-  , "Specify sync option, using format [safe|fast|fastest]:[nrecords_per_sync]." 
+  , "Specify sync option, using format [safe|fast|fastest]:[nrecords_per_sync]."
   , "fast:1000"
   };
   const command_line::arg_descriptor<std::string> arg_extra_spent_list = {"extra-spent-list", "Optional list of known spent outputs",""};
@@ -1233,7 +1233,7 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  mlog_configure(mlog_get_default_log_path("swap-blockchain-find-spent-outputs.log"), true);
+  mlog_configure(mlog_get_default_log_path("dogemone-blockchain-find-spent-outputs.log"), true);
   if (!command_line::is_arg_defaulted(vm, arg_log_level))
     mlog_set_log(command_line::get_arg(vm, arg_log_level).c_str());
   else

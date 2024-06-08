@@ -12,16 +12,16 @@ See also each utility's "--help" option.
 
 ### Export an existing blockchain database
 
-`$ swap-blockchain-export`
+`$ dogemone-blockchain-export`
 
 This loads the existing blockchain and exports it to `$MONERO_DATA_DIR/export/blockchain.raw`
 
 ### Import the exported file
 
-`$ swap-blockchain-import`
+`$ dogemone-blockchain-import`
 
 This imports blocks from `$MONERO_DATA_DIR/export/blockchain.raw` (exported using the
-`swap-blockchain-export` tool as described above) into the current database.
+`dogemone-blockchain-export` tool as described above) into the current database.
 
 Defaults: `--batch on`, `--batch size 20000`, `--verify on`
 
@@ -30,14 +30,14 @@ Batch size refers to number of blocks and can be adjusted for performance based 
 Verification should only be turned off if importing from a trusted blockchain.
 
 If you encounter an error like "resizing not supported in batch mode", you can just re-run
-the `swap-blockchain-import` command again, and it will restart from where it left off.
+the `dogemone-blockchain-import` command again, and it will restart from where it left off.
 
 ```bash
 ## use default settings to import blockchain.raw into database
-$ swap-blockchain-import
+$ dogemone-blockchain-import
 
 ## fast import with large batch size, database mode "fastest", verification off
-$ swap-blockchain-import --batch-size 20000 --database lmdb#fastest --verify off
+$ dogemone-blockchain-import --batch-size 20000 --database lmdb#fastest --verify off
 
 ```
 
@@ -80,9 +80,9 @@ LMDB flags (more than one may be specified):
 ## Examples:
 
 ```bash
-$ swap-blockchain-import --database lmdb#fastest
+$ dogemone-blockchain-import --database lmdb#fastest
 
-$ swap-blockchain-import --database lmdb#nosync
+$ dogemone-blockchain-import --database lmdb#nosync
 
-$ swap-blockchain-import --database lmdb#nosync,nometasync
+$ dogemone-blockchain-import --database lmdb#nosync,nometasync
 ```

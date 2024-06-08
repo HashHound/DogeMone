@@ -61,5 +61,5 @@ target_link_libraries(simplewallet
     ${EXTRA_LIBRARIES})
 set_property(TARGET simplewallet
   PROPERTY
-    OUTPUT_NAME "swap-wallet-cli")
+    OUTPUT_NAME "dogemone-wallet-cli")
 install(TARGETS simplewallet DESTINATION bin)

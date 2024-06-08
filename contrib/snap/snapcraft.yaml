@@ -1,6 +1,6 @@
-name: swap
+name: dogemone
 version: 3.1.0-1
-summary: "Swap: the secure, private, untraceable cryptocurrency https://getmonero.org"
+summary: "Dogemone: the secure, private, untraceable cryptocurrency https://getmonero.org"
 description: |
     Dogemone is a private, secure, untraceable, decentralised digital currency.
     You are your bank, you control your funds, and nobody can trace your transfers
@@ -9,23 +9,23 @@ grade: devel
 confinement: strict
 
 apps:
-    swapd:
+    dogemoned:
         daemon: forking
         command: |
-          swapd-wrapper --detach --data-dir ${SNAP_COMMON} --config-file ${SNAP_USER_DATA}/etc/swapd.conf
+          dogemoned-wrapper --detach --data-dir ${SNAP_COMMON} --config-file ${SNAP_USER_DATA}/etc/dogemoned.conf
         plugs:
             - network
             - network-bind
-    swap-wallet-rpc:
+    dogemone-wallet-rpc:
         command: |
-          swap-wallet-rpc --log-file ${SNAP_USER_DATA}
+          dogemone-wallet-rpc --log-file ${SNAP_USER_DATA}
         plugs:
             - home
             - network
             - network-bind
-    swap-wallet-cli:
+    dogemone-wallet-cli:
         command: |
-          swap-wallet-cli --log-file ${SNAP_USER_DATA}
+          dogemone-wallet-cli --log-file ${SNAP_USER_DATA}
         plugs:
             - home
             - network
@@ -71,8 +71,8 @@ parts:
         plugin: dump
         source: .
         organize:
-            contrib/snap/swapd.conf: etc/swapd.conf
-            contrib/snap/swapd-wrapper: bin/swapd-wrapper
+            contrib/snap/dogemoned.conf: etc/dogemoned.conf
+            contrib/snap/dogemoned-wrapper: bin/dogemoned-wrapper
         prime:
             - etc
             - bin
