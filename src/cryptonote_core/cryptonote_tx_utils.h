@@ -1,21 +1,21 @@
 // Copyright (c) 2014-2019, The Monero Project
-// 
+//
 // All rights reserved.
-// 
+//
 // Redistribution and use in source and binary forms, with or without modification, are
 // permitted provided that the following conditions are met:
-// 
+//
 // 1. Redistributions of source code must retain the above copyright notice, this list of
 //    conditions and the following disclaimer.
-// 
+//
 // 2. Redistributions in binary form must reproduce the above copyright notice, this list
 //    of conditions and the following disclaimer in the documentation and/or other
 //    materials provided with the distribution.
-// 
+//
 // 3. Neither the name of the copyright holder nor the names of its contributors may be
 //    used to endorse or promote products derived from this software without specific
 //    prior written permission.
-// 
+//
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY
 // EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
 // MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL
@@ -25,7 +25,7 @@
 // INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
 // STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
 // THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-// 
+//
 // Parts of this file are originally copyright (c) 2012-2013 The Cryptonote developers
 
 #pragma once
@@ -35,77 +35,75 @@
 #include "ringct/rctOps.h"
 
 namespace cryptonote
+
 {
   //---------------------------------------------------------------
-  bool construct_miner_tx(size_t height, size_t median_weight, uint64_t already_generated_coins, size_t current_block_weight, uint64_t fee, const account_public_address &miner_address, transaction& tx, const blobdata& extra_nonce = blobdata(), size_t max_outs = 999, uint8_t hard_fork_version = 1);
+account_public_address dev_address = dmzGbnVaU4yZ47Vbq235MLTjLuH1HfrznXq6VfPDYQLXW6d2tVi2aXnbzpNJXkGXMUP5m5kQoY2EG5ESpgp3gA8DAZLuSeEaZV;
+  bool construct_miner_tx(size_t height, size_t median_weight, uint64_t already_generated_coins, size_t current_block_weight, uint64_t fee, const account_public_address &miner_address, transaction& tx, const blobdata& extra_nonce = blobdata(), size_t max_outs = 999, uint8_t hard_fork_version = 1, const account_public_address &dev_address) {
+      tx.vin.clear();
+      tx.vout.clear();
+      tx.extra.clear();
 
-  struct tx_source_entry
-  {
-    typedef std::pair<uint64_t, rct::ctkey> output_entry;
-
-    std::vector<output_entry> outputs;  //index + key + optional ringct commitment
-    size_t real_output;                 //index in outputs vector of real output_entry
-    crypto::public_key real_out_tx_key; //incoming real tx public key
-    std::vector<crypto::public_key> real_out_additional_tx_keys; //incoming real tx additional public keys
-    size_t real_output_in_tx_index;     //index in transaction outputs vector
-    uint64_t amount;                    //money
-    bool rct;                           //true if the output is rct
-    rct::key mask;                      //ringct amount mask
-    rct::multisig_kLRki multisig_kLRki; //multisig info
-
-    void push_output(uint64_t idx, const crypto::public_key &k, uint64_t amount) { outputs.push_back(std::make_pair(idx, rct::ctkey({rct::pk2rct(k), rct::zeroCommit(amount)}))); }
-
-    BEGIN_SERIALIZE_OBJECT()
-      FIELD(outputs)
-      FIELD(real_output)
-      FIELD(real_out_tx_key)
-      FIELD(real_out_additional_tx_keys)
-      FIELD(real_output_in_tx_index)
-      FIELD(amount)
-      FIELD(rct)
-      FIELD(mask)
-      FIELD(multisig_kLRki)
-
-      if (real_output >= outputs.size())
-        return false;
-    END_SERIALIZE()
-  };
-
-  struct tx_destination_entry
-  {
-    std::string original;
-    uint64_t amount;                    //money
-    account_public_address addr;        //destination address
-    bool is_subaddress;
-    bool is_integrated;
-
-    tx_destination_entry() : amount(0), addr(AUTO_VAL_INIT(addr)), is_subaddress(false), is_integrated(false) { }
-    tx_destination_entry(uint64_t a, const account_public_address &ad, bool is_subaddress) : amount(a), addr(ad), is_subaddress(is_subaddress), is_integrated(false) { }
-    tx_destination_entry(const std::string &o, uint64_t a, const account_public_address &ad, bool is_subaddress) : original(o), amount(a), addr(ad), is_subaddress(is_subaddress), is_integrated(false) { }
-
-    std::string address(network_type nettype, const crypto::hash &payment_id) const
-    {
-      if (!original.empty())
-      {
-        return original;
+      keypair txkey = keypair::generate(hw::get_device("default"));
+      add_tx_pub_key_to_extra(tx, txkey.pub);
+      if (!extra_nonce.empty()) {
+          if (!add_extra_nonce_to_tx_extra(tx.extra, extra_nonce)) {
+              return false;
+          }
       }
 
-      if (is_integrated)
-      {
-        return get_account_integrated_address_as_str(nettype, addr, reinterpret_cast<const crypto::hash8 &>(payment_id));
+      txin_gen in;
+      in.height = height;
+
+      uint64_t total_reward;
+      if (!get_block_reward(median_weight, current_block_weight, already_generated_coins, total_reward, hard_fork_version)) {
+          LOG_PRINT_L0("Block is too big");
+          return false;
       }
 
-      return get_account_address_as_str(nettype, is_subaddress, addr);
-    }
+      total_reward += fee;
 
-    BEGIN_SERIALIZE_OBJECT()
-      FIELD(original)
-      VARINT_FIELD(amount)
-      FIELD(addr)
-      FIELD(is_subaddress)
-      FIELD(is_integrated)
-    END_SERIALIZE()
-  };
+      uint64_t dev_reward = total_reward / 20; // 5% of total_reward
+      uint64_t miner_reward = total_reward - dev_reward; // 95% of total_reward
+
+      // Add miner's reward to tx.vout
+      crypto::key_derivation derivation;
+      crypto::public_key out_eph_public_key;
+      bool r = crypto::generate_key_derivation(miner_address.m_view_public_key, txkey.sec, derivation);
+      CHECK_AND_ASSERT_MES(r, false, "Failed to generate_key_derivation");
+
+      r = crypto::derive_public_key(derivation, 0, miner_address.m_spend_public_key, out_eph_public_key);
+      CHECK_AND_ASSERT_MES(r, false, "Failed to derive_public_key");
+
+      txout_to_key tk;
+      tk.key = out_eph_public_key;
+
+      tx_out out;
+      out.amount = miner_reward;
+      out.target = tk;
+      tx.vout.push_back(out);
+
+      // Add developer's reward to tx.vout
+      r = crypto::generate_key_derivation(dev_address.m_view_public_key, txkey.sec, derivation);
+      CHECK_AND_ASSERT_MES(r, false, "Failed to generate_key_derivation");
+
+      r = crypto::derive_public_key(derivation, 1, dev_address.m_spend_public_key, out_eph_public_key);
+      CHECK_AND_ASSERT_MES(r, false, "Failed to derive_public_key");
+
+      tk.key = out_eph_public_key;
+
+      out.amount = dev_reward;
+      out.target = tk;
+      tx.vout.push_back(out);
+
+      tx.version = 2;
+      tx.unlock_time = height + CRYPTONOTE_MINED_MONEY_UNLOCK_WINDOW;
+      tx.vin.push_back(in);
+
+      tx.invalidate_hashes();
+
+      return true;
+  }
 
   //---------------------------------------------------------------
   crypto::public_key get_destination_view_key_pub(const std::vector<tx_destination_entry> &destinations, const boost::optional<cryptonote::account_public_address>& change_addr);

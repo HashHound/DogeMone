@@ -78,35 +78,42 @@ namespace cryptonote {
   }
   //-----------------------------------------------------------------------------------------------
   bool get_block_reward(size_t median_weight, size_t current_block_weight, uint64_t already_generated_coins, uint64_t &reward, uint8_t version) {
-    const int target = DIFFICULTY_TARGET;
-    const int target_minutes = 2; //genesis tx based on 120s
-    const int emission_speed_factor = EMISSION_SPEED_FACTOR_PER_MINUTE - (target_minutes-1);
+      const int target = DIFFICULTY_TARGET;
+      const int target_minutes = 2; // genesis tx based on 120s
+      const int emission_speed_factor = EMISSION_SPEED_FACTOR_PER_MINUTE - (target_minutes - 1);
 
-    uint64_t base_reward = (MONEY_SUPPLY - already_generated_coins) >> emission_speed_factor >> 3;
-    if (base_reward < (FINAL_SUBSIDY_PER_MINUTE*target_minutes)>>3)
-    {
-      base_reward = (FINAL_SUBSIDY_PER_MINUTE*target_minutes)>>3;
-    }
+      uint64_t base_reward = (MONEY_SUPPLY - already_generated_coins) >> emission_speed_factor >> 3;
+      if (base_reward < (FINAL_SUBSIDY_PER_MINUTE * target_minutes) >> 3) {
+          base_reward = (FINAL_SUBSIDY_PER_MINUTE * target_minutes) >> 3;
+      }
 
-    if(already_generated_coins==0)
-        base_reward = MONEY_SUPPLY >> emission_speed_factor;
+      if (already_generated_coins == 0)
+          base_reward = MONEY_SUPPLY >> emission_speed_factor;
 
-    uint64_t full_reward_zone = get_min_block_weight(version);
+      uint64_t full_reward_zone = get_min_block_weight(version);
 
-    //make it soft
-    if (median_weight < full_reward_zone) {
-      median_weight = full_reward_zone;
-    }
+      // Make it soft
+      if (median_weight < full_reward_zone) {
+          median_weight = full_reward_zone;
+      }
 
-    if (current_block_weight <= median_weight) {
-      reward = base_reward;
+      if (current_block_weight <= median_weight) {
+          reward = base_reward;
+          return true;
+      }
+
+      if (current_block_weight > 2 * median_weight) {
+          MERROR("Block cumulative weight is too big: " << current_block_weight << ", expected less than " << 2 * median_weight);
+          return false;
+      }
+
+      uint64_t product_hi;
+      // calculates base_reward * median_weight / current_block_weight
+      mul128(base_reward, median_weight, &product_hi, &reward);
+      div128_64(product_hi, reward, current_block_weight, &reward);
+
       return true;
-    }
-
-    if(current_block_weight > 2 * median_weight) {
-      MERROR("Block cumulative weight is too big: " << current_block_weight << ", expected less than " << 2 * median_weight);
-      return false;
-    }
+  }
 
     uint64_t product_hi;
     // BUGFIX: 32-bit saturation bug (e.g. ARM7), the result was being
@@ -218,7 +225,7 @@ namespace cryptonote {
         info.has_payment_id = false;
       }
       else {
-        LOG_PRINT_L1("Wrong address prefix: " << prefix << ", expected " << address_prefix 
+        LOG_PRINT_L1("Wrong address prefix: " << prefix << ", expected " << address_prefix
           << " or " << integrated_address_prefix
           << " or " << subaddress_prefix);
         return false;
