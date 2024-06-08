@@ -195,8 +195,8 @@ namespace config
   boost::uuids::uuid const NETWORK_ID = { {
       0xA1 ,0x32, 0x13, 0x70 , 0x51, 0x04 , 0x23, 0x60, 0x17, 0x32, 0xA1, 0x81, 0x16, 0x32, 0xA1, 0x12
     } }; // Bender's nightmare
-  std::string const GENESIS_TX = "013c01ff0001ffffffffffff03029b2e4c0281c0b02e7c53291a94d1d0cbff8883f8024f5142ee494ffbbd08807121017767aafcde9be00dcfd098715ebcf7f410daebc582fda69d24a28e9d0bc890d1";
-  uint32_t const GENESIS_NONCE = 10001;
+  std::string const GENESIS_TX = "023c01ff0001ffffffffffff07020bf6522f9152fa26cd1fc5c022b1a9e13dab697f3acf4b4d0ca6950a867a194321011d92826d0656958865a035264725799f39f6988faa97d532f972895de849496d00";
+  uint32_t const GENESIS_NONCE = 10005;
 
   // Hash domain separators
   const char HASH_KEY_BULLETPROOF_EXPONENT[] = "bulletproof";
@@ -221,8 +221,8 @@ namespace config
     boost::uuids::uuid const NETWORK_ID = { {
         0xA2 ,0x39, 0x23, 0x70 , 0x61, 0x04 , 0x41, 0x60, 0x17, 0x32, 0x00, 0x81, 0x16, 0xA1, 0xA1, 0x10
       } }; // Bender's daydream
-    std::string const GENESIS_TX = "";
-    uint32_t const GENESIS_NONCE = 10001;
+    std::string const GENESIS_TX = "023c01ff0001ffffffffffff07020bf6522f9152fa26cd1fc5c022b1a9e13dab697f3acf4b4d0ca6950a867a194321011d92826d0656958865a035264725799f39f6988faa97d532f972895de849496d00";
+    uint32_t const GENESIS_NONCE = 10006;
   }
 
   namespace stagenet
@@ -236,8 +236,8 @@ namespace config
     boost::uuids::uuid const NETWORK_ID = { {
         0xA4 ,0x39, 0x23, 0x70 , 0x61, 0x04 , 0x41, 0x60, 0x17, 0x32, 0x00, 0x81, 0x16, 0xA1, 0xA1, 0x10
       } }; // Bender's daydream
-    std::string const GENESIS_TX = "";
-    uint32_t const GENESIS_NONCE = 10002;
+    std::string const GENESIS_TX = "023c01ff0001ffffffffffff07020bf6522f9152fa26cd1fc5c022b1a9e13dab697f3acf4b4d0ca6950a867a194321011d92826d0656958865a035264725799f39f6988faa97d532f972895de849496d00";
+    uint32_t const GENESIS_NONCE = 10007;
   }
 }
 
