@@ -1,3 +1,4 @@
+
 #include <boost/optional/optional.hpp>
 #include <boost/range/adaptor/indexed.hpp>
 #include <gtest/gtest.h>
@@ -17,22 +18,10 @@
 namespace test
 {
     cryptonote::transaction
-    make_miner_transaction(cryptonote::account_public_address const& to, cryptonote::account_public_address const& dev)
+    make_miner_transaction(cryptonote::account_public_address const& to)
     {
         cryptonote::transaction tx{};
-        cryptonote::block_reward_parts reward_parts;
-
-        if (!cryptonote::get_base_block_reward(0, 0, 0, 500, reward_parts, 0))
-            throw std::runtime_error{"block reward calculation error"};
-
-        uint64_t dev_fee = reward_parts.base_miner_reward / 20; // 5% fee for developer
-        uint64_t miner_reward = reward_parts.base_miner_reward - dev_fee;
-
-        std::vector<cryptonote::tx_destination_entry> destinations;
-        destinations.push_back({miner_reward, to});
-        destinations.push_back({dev_fee, dev});
-
-        if (!cryptonote::construct_miner_tx(0, 0, 0, 2, 0, destinations, tx))
+        if (!cryptonote::construct_miner_tx(0, 0, 5000, 500, 500, to, tx))
             throw std::runtime_error{"transaction construction error"};
 
         crypto::hash id{0};
@@ -47,7 +36,6 @@ namespace test
         cryptonote::account_keys const& from,
         std::vector<cryptonote::transaction> const& sources,
         std::vector<cryptonote::account_public_address> const& destinations,
-        cryptonote::account_public_address const& dev,
         bool rct,
         bool bulletproof)
     {
@@ -78,12 +66,8 @@ namespace test
         }
 
         std::vector<cryptonote::tx_destination_entry> to;
-        uint64_t dev_fee = source_amount / 20; // 5% fee for developer
-        uint64_t remaining_amount = source_amount - dev_fee;
-
         for (auto const& destination : destinations)
-            to.push_back({(remaining_amount / destinations.size()), destination, false});
-        to.push_back({dev_fee, dev, false});
+            to.push_back({(source_amount / destinations.size()), destination, false});
 
         cryptonote::transaction tx{};
 
@@ -143,9 +127,7 @@ TEST(JsonSerialization, MinerTransaction)
 {
     cryptonote::account_base acct;
     acct.generate();
-    cryptonote::account_base dev_acct;
-    dev_acct.generate();
-    const auto miner_tx = test::make_miner_transaction(acct.get_keys().m_account_address, dev_acct.get_keys().m_account_address);
+    const auto miner_tx = test::make_miner_transaction(acct.get_keys().m_account_address);
 
     crypto::hash tx_hash{};
     ASSERT_TRUE(cryptonote::get_transaction_hash(miner_tx, tx_hash));
@@ -169,14 +151,13 @@ TEST(JsonSerialization, RegularTransaction)
 {
     cryptonote::account_base acct1;
     acct1.generate();
+
     cryptonote::account_base acct2;
     acct2.generate();
-    cryptonote::account_base dev_acct;
-    dev_acct.generate();
 
-    const auto miner_tx = test::make_miner_transaction(acct1.get_keys().m_account_address, dev_acct.get_keys().m_account_address);
+    const auto miner_tx = test::make_miner_transaction(acct1.get_keys().m_account_address);
     const auto tx = test::make_transaction(
-        acct1.get_keys(), {miner_tx}, {acct2.get_keys().m_account_address}, dev_acct.get_keys().m_account_address, false, false
+        acct1.get_keys(), {miner_tx}, {acct2.get_keys().m_account_address}, false, false
     );
 
     crypto::hash tx_hash{};
@@ -201,14 +182,13 @@ TEST(JsonSerialization, RingctTransaction)
 {
     cryptonote::account_base acct1;
     acct1.generate();
+
     cryptonote::account_base acct2;
     acct2.generate();
-    cryptonote::account_base dev_acct;
-    dev_acct.generate();
 
-    const auto miner_tx = test::make_miner_transaction(acct1.get_keys().m_account_address, dev_acct.get_keys().m_account_address);
+    const auto miner_tx = test::make_miner_transaction(acct1.get_keys().m_account_address);
     const auto tx = test::make_transaction(
-        acct1.get_keys(), {miner_tx}, {acct2.get_keys().m_account_address}, dev_acct.get_keys().m_account_address, true, false
+        acct1.get_keys(), {miner_tx}, {acct2.get_keys().m_account_address}, true, false
     );
 
     crypto::hash tx_hash{};
@@ -233,14 +213,13 @@ TEST(JsonSerialization, BulletproofTransaction)
 {
     cryptonote::account_base acct1;
     acct1.generate();
+
     cryptonote::account_base acct2;
     acct2.generate();
-    cryptonote::account_base dev_acct;
-    dev_acct.generate();
 
-    const auto miner_tx = test::make_miner_transaction(acct1.get_keys().m_account_address, dev_acct.get_keys().m_account_address);
+    const auto miner_tx = test::make_miner_transaction(acct1.get_keys().m_account_address);
     const auto tx = test::make_transaction(
-        acct1.get_keys(), {miner_tx}, {acct2.get_keys().m_account_address}, dev_acct.get_keys().m_account_address, true, true
+        acct1.get_keys(), {miner_tx}, {acct2.get_keys().m_account_address}, true, true
     );
 
     crypto::hash tx_hash{};
@@ -260,3 +239,4 @@ TEST(JsonSerialization, BulletproofTransaction)
 
     EXPECT_EQ(tx_bytes, tx_copy_bytes);
 }
+

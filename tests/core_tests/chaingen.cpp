@@ -1,21 +1,21 @@
 // Copyright (c) 2014-2019, The Monero Project
-//
+// 
 // All rights reserved.
-//
+// 
 // Redistribution and use in source and binary forms, with or without modification, are
 // permitted provided that the following conditions are met:
-//
+// 
 // 1. Redistributions of source code must retain the above copyright notice, this list of
 //    conditions and the following disclaimer.
-//
+// 
 // 2. Redistributions in binary form must reproduce the above copyright notice, this list
 //    of conditions and the following disclaimer in the documentation and/or other
 //    materials provided with the distribution.
-//
+// 
 // 3. Neither the name of the copyright holder nor the names of its contributors may be
 //    used to endorse or promote products derived from this software without specific
 //    prior written permission.
-//
+// 
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY
 // EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
 // MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL
@@ -25,7 +25,7 @@
 // INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
 // STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
 // THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
+// 
 // Parts of this file are originally copyright (c) 2012-2013 The Cryptonote developers
 
 #include <vector>
@@ -253,44 +253,34 @@ bool test_generator::construct_block(cryptonote::block& blk, uint64_t height, co
     get_transaction_hash(tx, tx_hash);
     blk.tx_hashes.push_back(tx_hash);
   }
-account_public_address dev_address = dmzGbnVaU4yZ47Vbq235MLTjLuH1HfrznXq6VfPDYQLXW6d2tVi2aXnbzpNJXkGXMUP5m5kQoY2EG5ESpgp3gA8DAZLuSeEaZV;
-uint64_t total_fee = 0;
-size_t txs_weight = 0;
-BOOST_FOREACH(auto& tx, tx_list)
-{
-  uint64_t fee = 0;
-  bool r = get_tx_fee(tx, fee);
-  CHECK_AND_ASSERT_MES(r, false, "wrong transaction passed to construct_block");
-  total_fee += fee;
-  txs_weight += get_transaction_weight(tx);
-}
 
-blk.miner_tx = AUTO_VAL_INIT(blk.miner_tx);
-size_t target_block_weight = txs_weight + get_transaction_weight(blk.miner_tx);
-while (true)
-{
-  if (!construct_miner_tx(height, misc_utils::median(block_weights), already_generated_coins, target_block_weight, total_fee, miner_acc.get_keys().m_account_address, blk.miner_tx, blobdata(), 10, hf_ver ? hf_ver.get() : 1, dev_address))
-    return false;
-
-  size_t actual_block_weight = txs_weight + get_transaction_weight(blk.miner_tx);
-  if (target_block_weight < actual_block_weight)
+  uint64_t total_fee = 0;
+  size_t txs_weight = 0;
+  BOOST_FOREACH(auto& tx, tx_list)
   {
-    target_block_weight = actual_block_weight;
+    uint64_t fee = 0;
+    bool r = get_tx_fee(tx, fee);
+    CHECK_AND_ASSERT_MES(r, false, "wrong transaction passed to construct_block");
+    total_fee += fee;
+    txs_weight += get_transaction_weight(tx);
   }
-  else if (actual_block_weight < target_block_weight)
+
+  blk.miner_tx = AUTO_VAL_INIT(blk.miner_tx);
+  size_t target_block_weight = txs_weight + get_transaction_weight(blk.miner_tx);
+  while (true)
   {
-    size_t delta = target_block_weight - actual_block_weight;
-    blk.miner_tx.extra.resize(blk.miner_tx.extra.size() + delta, 0);
-    actual_block_weight = txs_weight + get_transaction_weight(blk.miner_tx);
-    if (actual_block_weight == target_block_weight)
+    if (!construct_miner_tx(height, misc_utils::median(block_weights), already_generated_coins, target_block_weight, total_fee, miner_acc.get_keys().m_account_address, blk.miner_tx, blobdata(), 10, hf_ver ? hf_ver.get() : 1))
+      return false;
+
+    size_t actual_block_weight = txs_weight + get_transaction_weight(blk.miner_tx);
+    if (target_block_weight < actual_block_weight)
     {
-      break;
+      target_block_weight = actual_block_weight;
     }
-    else
+    else if (actual_block_weight < target_block_weight)
     {
-      CHECK_AND_ASSERT_MES(target_block_weight < actual_block_weight, false, "Unexpected block size");
-      delta = actual_block_weight - target_block_weight;
-      blk.miner_tx.extra.resize(blk.miner_tx.extra.size() - delta);
+      size_t delta = target_block_weight - actual_block_weight;
+      blk.miner_tx.extra.resize(blk.miner_tx.extra.size() + delta, 0);
       actual_block_weight = txs_weight + get_transaction_weight(blk.miner_tx);
       if (actual_block_weight == target_block_weight)
       {
@@ -298,18 +288,27 @@ while (true)
       }
       else
       {
-        CHECK_AND_ASSERT_MES(actual_block_weight < target_block_weight, false, "Unexpected block size");
-        blk.miner_tx.extra.resize(blk.miner_tx.extra.size() + delta, 0);
-        target_block_weight = txs_weight + get_transaction_weight(blk.miner_tx);
+        CHECK_AND_ASSERT_MES(target_block_weight < actual_block_weight, false, "Unexpected block size");
+        delta = actual_block_weight - target_block_weight;
+        blk.miner_tx.extra.resize(blk.miner_tx.extra.size() - delta);
+        actual_block_weight = txs_weight + get_transaction_weight(blk.miner_tx);
+        if (actual_block_weight == target_block_weight)
+        {
+          break;
+        }
+        else
+        {
+          CHECK_AND_ASSERT_MES(actual_block_weight < target_block_weight, false, "Unexpected block size");
+          blk.miner_tx.extra.resize(blk.miner_tx.extra.size() + delta, 0);
+          target_block_weight = txs_weight + get_transaction_weight(blk.miner_tx);
+        }
       }
     }
+    else
+    {
+      break;
+    }
   }
-  else
-  {
-    break;
-  }
-}
-
 
   //blk.tree_root_hash = get_tx_tree_hash(blk);
 
@@ -358,9 +357,6 @@ bool test_generator::construct_block_manually(block& blk, const block& prev_bloc
   max_outs          = actual_params & bf_max_outs ? max_outs : 9999;
   hf_version        = actual_params & bf_hf_version ? hf_version : 1;
 
-  account_public_address dev_address;
-  dev_address.m_spend_public_key = dmzGbnVaU4yZ47Vbq235MLTjLuH1HfrznXq6VfPDYQLXW6d2tVi2aXnbzpNJXkGXMUP5m5kQoY2EG5ESpgp3gA8DAZLuSeEaZV;
-  dev_address.m_view_public_key = 0e58932b15d13b809b6d5c996384052328fdd607fd194ce490a4d262befc35d7;
   size_t height = get_block_height(prev_block) + 1;
   uint64_t already_generated_coins = get_already_generated_coins(prev_block);
   std::vector<size_t> block_weights;
@@ -373,11 +369,11 @@ bool test_generator::construct_block_manually(block& blk, const block& prev_bloc
   {
     size_t current_block_weight = txs_weight + get_transaction_weight(blk.miner_tx);
     // TODO: This will work, until size of constructed block is less then CRYPTONOTE_BLOCK_GRANTED_FULL_REWARD_ZONE
-    if (!construct_miner_tx(height, misc_utils::median(block_weights), already_generated_coins, current_block_weight, 0, miner_acc.get_keys().m_account_address, blk.miner_tx, blobdata(), max_outs, hf_version, dev_address))
+    if (!construct_miner_tx(height, misc_utils::median(block_weights), already_generated_coins, current_block_weight, 0, miner_acc.get_keys().m_account_address, blk.miner_tx, blobdata(), max_outs, hf_version))
       return false;
   }
 
-  // blk.tree_root_hash = get_tx_tree_hash(blk);
+  //blk.tree_root_hash = get_tx_tree_hash(blk);
 
   difficulty_type a_diffic = actual_params & bf_diffic ? diffic : get_test_difficulty(hf_version);
   fill_nonce(blk, a_diffic, height);
