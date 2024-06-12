@@ -189,24 +189,25 @@ RUN set -ex && \
 COPY --from=builder /src/build/release/bin /usr/local/bin/
 
 # Create monero user
-RUN adduser --system --group --disabled-password dogemone && \
-	mkdir -p /wallet /home/dogemone/.dogemone && \
-	chown -R dogemone:dogemone /home/dogemone/.dogemone && \
-	chown -R dogemone:dogeMONE /wallet
+RUN adduser --system --group --disabled-password swap && \
+	mkdir -p /wallet /home/swap/.swap && \
+	chown -R swap:swap /home/swap/.swap && \
+	chown -R swap:swAP /wallet
 
 # Contains the blockchain
-VOLUME /root/.dogemone
+VOLUME /root/.swap
 
 # Generate your wallet via accessing the container and run:
 # cd /wallet
-# dogemone-wallet-cli
+# swap-wallet-cli
 VOLUME /wallet
 
-EXPOSE 49200
-EXPOSE 53000
-EXPOSE 49300
-EXPOSE 54000
-EXPOSE 49400
-EXPOSE 55000
+EXPOSE 19949
+EXPOSE 19950
+EXPOSE 29949
+EXPOSE 29950
+EXPOSE 39949
+EXPOSE 39950
 
-ENTRYPOINT ["dogemoned", "--p2p-bind-ip=0.0.0.0", "--p2p-bind-port=49200", "--rpc-bind-ip=0.0.0.0", "--rpc-bind-port=53000", "--non-interactive", "--confirm-external-bind"]
+ENTRYPOINT ["swapd", "--p2p-bind-ip=0.0.0.0", "--p2p-bind-port=19949", "--rpc-bind-ip=0.0.0.0", "--rpc-bind-port=19950", "--non-interactive", "--confirm-external-bind"]
+
