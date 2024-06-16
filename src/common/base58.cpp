@@ -1,21 +1,21 @@
 // Copyright (c) 2014-2019, The Monero Project
-// 
+//
 // All rights reserved.
-// 
+//
 // Redistribution and use in source and binary forms, with or without modification, are
 // permitted provided that the following conditions are met:
-// 
+//
 // 1. Redistributions of source code must retain the above copyright notice, this list of
 //    conditions and the following disclaimer.
-// 
+//
 // 2. Redistributions in binary form must reproduce the above copyright notice, this list
 //    of conditions and the following disclaimer in the documentation and/or other
 //    materials provided with the distribution.
-// 
+//
 // 3. Neither the name of the copyright holder nor the names of its contributors may be
 //    used to endorse or promote products derived from this software without specific
 //    prior written permission.
-// 
+//
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY
 // EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
 // MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL
@@ -25,7 +25,7 @@
 // INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
 // STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
 // THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-// 
+//
 // Parts of this file are originally copyright (c) 2012-2013 The Cryptonote developers
 
 #include "base58.h"
@@ -33,6 +33,7 @@
 #include <assert.h>
 #include <string>
 #include <vector>
+#include <cstring>
 
 #include "crypto/hash.h"
 #include "int-util.h"
@@ -224,35 +225,32 @@ namespace tools
       return true;
     }
 
-    std::string encode_addr(uint64_t tag, const std::string& data)
+    std::string encode_addr(std::string prefix, const std::string& data)
     {
-      std::string buf = get_varint_data(tag);
-      buf += data;
-      crypto::hash hash = crypto::cn_fast_hash(buf.data(), buf.size());
-      const char* hash_data = reinterpret_cast<const char*>(&hash);
-      buf.append(hash_data, addr_checksum_size);
+      std::string buf = prefix + data;
+      crypto::hash hash;
+      crypto::cn_fast_hash(buf.data(), buf.size(), hash);
+      buf.append(hash.data, addr_checksum_size);
       return encode(buf);
     }
 
-    bool decode_addr(const std::string &addr, uint64_t& tag, std::string& data)
+    bool decode_addr(std::string& prefix, std::string& data, const std::string& addr)
     {
-      std::string addr_data;
-      bool r = decode(addr, addr_data);
-      if (!r) return false;
-      if (addr_data.size() <= addr_checksum_size) return false;
+      std::string buf;
+      if (!decode(addr, buf))
+        return false;
+      if (buf.size() <= addr_checksum_size)
+        return false;
 
-      std::string checksum(addr_checksum_size, '\0');
-      checksum = addr_data.substr(addr_data.size() - addr_checksum_size);
+      std::string checksum(buf.end() - addr_checksum_size, buf.end());
+      buf.resize(buf.size() - addr_checksum_size);
+      crypto::hash hash;
+      crypto::cn_fast_hash(buf.data(), buf.size(), hash);
+      if (memcmp(checksum.data(), hash.data, addr_checksum_size))
+        return false;
 
-      addr_data.resize(addr_data.size() - addr_checksum_size);
-      crypto::hash hash = crypto::cn_fast_hash(addr_data.data(), addr_data.size());
-      std::string expected_checksum(reinterpret_cast<const char*>(&hash), addr_checksum_size);
-      if (expected_checksum != checksum) return false;
-
-      int read = tools::read_varint(addr_data.begin(), addr_data.end(), tag);
-      if (read <= 0) return false;
-
-      data = addr_data.substr(read);
+      prefix = buf.substr(0, prefix.size());
+      data = buf.substr(prefix.size());
       return true;
     }
   }
