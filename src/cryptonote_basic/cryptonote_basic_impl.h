@@ -30,13 +30,10 @@
 
 #pragma once
 
-#include <vector>
-#include <boost/serialization/vector.hpp>
-#include "account.h"
 #include "cryptonote_basic.h"
 #include "crypto/crypto.h"
 #include "crypto/hash.h"
-#include "common/types.h"
+
 
 namespace cryptonote {
   /************************************************************************/
