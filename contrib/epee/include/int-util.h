@@ -1,21 +1,21 @@
 // Copyright (c) 2014-2019, The Monero Project
-//
+// 
 // All rights reserved.
-//
+// 
 // Redistribution and use in source and binary forms, with or without modification, are
 // permitted provided that the following conditions are met:
-//
+// 
 // 1. Redistributions of source code must retain the above copyright notice, this list of
 //    conditions and the following disclaimer.
-//
+// 
 // 2. Redistributions in binary form must reproduce the above copyright notice, this list
 //    of conditions and the following disclaimer in the documentation and/or other
 //    materials provided with the distribution.
-//
+// 
 // 3. Neither the name of the copyright holder nor the names of its contributors may be
 //    used to endorse or promote products derived from this software without specific
 //    prior written permission.
-//
+// 
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY
 // EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
 // MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL
@@ -25,7 +25,7 @@
 // INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
 // STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
 // THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
+// 
 // Parts of this file are originally copyright (c) 2012-2013 The Cryptonote developers
 
 #pragma once
@@ -129,10 +129,11 @@ static inline uint32_t div128_32(uint64_t dividend_hi, uint64_t dividend_lo, uin
   return remainder;
 }
 
-// Long division with 2^64 base
+// Long divisor with 2^64 base
 void div128_64(uint64_t dividend_hi, uint64_t dividend_lo, uint64_t divisor, uint64_t* quotient_hi, uint64_t *quotient_lo, uint64_t *remainder_hi, uint64_t *remainder_lo);
 
-static inline void add64clamp(uint64_t *value, uint64_t add) {
+static inline void add64clamp(uint64_t *value, uint64_t add)
+{
   static const uint64_t maxval = (uint64_t)-1;
   if (*value > maxval - add)
     *value = maxval;
@@ -140,7 +141,8 @@ static inline void add64clamp(uint64_t *value, uint64_t add) {
     *value += add;
 }
 
-static inline void sub64clamp(uint64_t *value, uint64_t sub) {
+static inline void sub64clamp(uint64_t *value, uint64_t sub)
+{
   if (*value < sub)
     *value = 0;
   else
@@ -211,14 +213,12 @@ static inline void mem_inplace_swap16(void *mem, size_t n) {
     ((uint16_t *) mem)[i] = swap16(((const uint16_t *) mem)[i]);
   }
 }
-
 static inline void mem_inplace_swap32(void *mem, size_t n) {
   size_t i;
   for (i = 0; i < n; i++) {
     ((uint32_t *) mem)[i] = swap32(((const uint32_t *) mem)[i]);
   }
 }
-
 static inline void mem_inplace_swap64(void *mem, size_t n) {
   size_t i;
   for (i = 0; i < n; i++) {
@@ -226,23 +226,95 @@ static inline void mem_inplace_swap64(void *mem, size_t n) {
   }
 }
 
-static inline void mem_swap16(void *dst, const void *src, size_t n) {
+static inline void memcpy_ident16(void *dst, const void *src, size_t n) {
+  memcpy(dst, src, 2 * n);
+}
+static inline void memcpy_ident32(void *dst, const void *src, size_t n) {
+  memcpy(dst, src, 4 * n);
+}
+static inline void memcpy_ident64(void *dst, const void *src, size_t n) {
+  memcpy(dst, src, 8 * n);
+}
+
+static inline void memcpy_swap16(void *dst, const void *src, size_t n) {
   size_t i;
   for (i = 0; i < n; i++) {
     ((uint16_t *) dst)[i] = swap16(((const uint16_t *) src)[i]);
   }
 }
-
-static inline void mem_swap32(void *dst, const void *src, size_t n) {
+static inline void memcpy_swap32(void *dst, const void *src, size_t n) {
   size_t i;
   for (i = 0; i < n; i++) {
     ((uint32_t *) dst)[i] = swap32(((const uint32_t *) src)[i]);
   }
 }
-
-static inline void mem_swap64(void *dst, const void *src, size_t n) {
+static inline void memcpy_swap64(void *dst, const void *src, size_t n) {
   size_t i;
   for (i = 0; i < n; i++) {
     ((uint64_t *) dst)[i] = swap64(((const uint64_t *) src)[i]);
   }
 }
+
+#ifdef _MSC_VER
+# define LITTLE_ENDIAN	1234
+# define BIG_ENDIAN	4321
+# define BYTE_ORDER	LITTLE_ENDIAN
+#endif
+
+#if !defined(BYTE_ORDER) || !defined(LITTLE_ENDIAN) || !defined(BIG_ENDIAN)
+static_assert(false, "BYTE_ORDER is undefined. Perhaps, GNU extensions are not enabled");
+#endif
+
+#if BYTE_ORDER == LITTLE_ENDIAN
+#define SWAP16LE IDENT16
+#define SWAP16BE SWAP16
+#define swap16le ident16
+#define swap16be swap16
+#define mem_inplace_swap16le mem_inplace_ident
+#define mem_inplace_swap16be mem_inplace_swap16
+#define memcpy_swap16le memcpy_ident16
+#define memcpy_swap16be memcpy_swap16
+#define SWAP32LE IDENT32
+#define SWAP32BE SWAP32
+#define swap32le ident32
+#define swap32be swap32
+#define mem_inplace_swap32le mem_inplace_ident
+#define mem_inplace_swap32be mem_inplace_swap32
+#define memcpy_swap32le memcpy_ident32
+#define memcpy_swap32be memcpy_swap32
+#define SWAP64LE IDENT64
+#define SWAP64BE SWAP64
+#define swap64le ident64
+#define swap64be swap64
+#define mem_inplace_swap64le mem_inplace_ident
+#define mem_inplace_swap64be mem_inplace_swap64
+#define memcpy_swap64le memcpy_ident64
+#define memcpy_swap64be memcpy_swap64
+#endif
+
+#if BYTE_ORDER == BIG_ENDIAN
+#define SWAP16BE IDENT16
+#define SWAP16LE SWAP16
+#define swap16be ident16
+#define swap16le swap16
+#define mem_inplace_swap16be mem_inplace_ident
+#define mem_inplace_swap16le mem_inplace_swap16
+#define memcpy_swap16be memcpy_ident16
+#define memcpy_swap16le memcpy_swap16
+#define SWAP32BE IDENT32
+#define SWAP32LE SWAP32
+#define swap32be ident32
+#define swap32le swap32
+#define mem_inplace_swap32be mem_inplace_ident
+#define mem_inplace_swap32le mem_inplace_swap32
+#define memcpy_swap32be memcpy_ident32
+#define memcpy_swap32le memcpy_swap32
+#define SWAP64BE IDENT64
+#define SWAP64LE SWAP64
+#define swap64be ident64
+#define swap64le swap64
+#define mem_inplace_swap64be mem_inplace_ident
+#define mem_inplace_swap64le mem_inplace_swap64
+#define memcpy_swap64be memcpy_ident64
+#define memcpy_swap64le memcpy_swap64
+#endif

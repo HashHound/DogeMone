@@ -56,8 +56,8 @@ namespace epee { namespace net_utils
 	bool network_address::equal(const network_address& other) const
 	{
 		// clang typeid workaround
-		const network_address::interface* const self_ = self.get();
-		const network_address::interface* const other_self = other.self.get();
+		network_address::interface const* const self_ = self.get();
+		network_address::interface const* const other_self = other.self.get();
 		if (self_ == other_self) return true;
 		if (!self_ || !other_self) return false;
 		if (typeid(*self_) != typeid(*other_self)) return false;
@@ -67,8 +67,8 @@ namespace epee { namespace net_utils
 	bool network_address::less(const network_address& other) const
 	{
 		// clang typeid workaround
-		const network_address::interface* const self_ = self.get();
-		const network_address::interface* const other_self = other.self.get();
+		network_address::interface const* const self_ = self.get();
+		network_address::interface const* const other_self = other.self.get();
 		if (self_ == other_self) return false;
 		if (!self_ || !other_self) return self == nullptr;
 		if (typeid(*self_) != typeid(*other_self))
@@ -79,8 +79,8 @@ namespace epee { namespace net_utils
 	bool network_address::is_same_host(const network_address& other) const
 	{
 		// clang typeid workaround
-		const network_address::interface* const self_ = self.get();
-		const network_address::interface* const other_self = other.self.get();
+		network_address::interface const* const self_ = self.get();
+		network_address::interface const* const other_self = other.self.get();
 		if (self_ == other_self) return true;
 		if (!self_ || !other_self) return false;
 		if (typeid(*self_) != typeid(*other_self)) return false;
@@ -128,3 +128,4 @@ namespace epee { namespace net_utils
     return zone::invalid;
   }
 }}
+
