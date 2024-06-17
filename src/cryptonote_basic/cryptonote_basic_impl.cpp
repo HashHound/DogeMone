@@ -1,3 +1,33 @@
+// Copyright (c) 2014-2019, The Monero Project
+//
+// All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without modification, are
+// permitted provided that the following conditions are met:
+//
+// 1. Redistributions of source code must retain the above copyright notice, this list of
+//    conditions and the following disclaimer.
+//
+// 2. Redistributions in binary form must reproduce the above copyright notice, this list
+//    of conditions and the following disclaimer in the documentation and/or other
+//    materials provided with the distribution.
+//
+// 3. Neither the name of the copyright holder nor the names of its contributors may be
+//    used to endorse or promote products derived from this software without specific
+//    prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY
+// EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+// MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL
+// THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+// SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+// PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+// STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+// THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+//
+// Parts of this file are originally copyright (c) 2012-2013 The Cryptonote developers
+
 #include "include_base_utils.h"
 using namespace epee;
 
@@ -10,10 +40,9 @@ using namespace epee;
 #include "misc_language.h"
 #include "common/base58.h"
 #include "crypto/hash.h"
-#include "common/util.h"
+#include "int-util.h"
 #include "common/dns_utils.h"
 #include "cryptonote_basic/account.h"
-#include "ringct/rctOps.h" // Include rctOps for rct operations
 
 #undef MONERO_DEFAULT_LOG_CATEGORY
 #define MONERO_DEFAULT_LOG_CATEGORY "cn"
@@ -217,135 +246,52 @@ namespace cryptonote {
       }
 
       if (buff.size() != sizeof(public_address_outer_blob)) {
-        LOG_PRINT_L1("Wrong address length: " << buff.size() << ", expected " << sizeof(public_address_outer_blob));
+        LOG_PRINT_L1("Wrong public address size: " << buff.size() << ", expected size: " << sizeof(public_address_outer_blob));
         return false;
       }
 
-      public_address_outer_blob blob;
-      std::copy(buff.begin(), buff.end(), reinterpret_cast<char*>(&blob));
+      public_address_outer_blob blob = *reinterpret_cast<const public_address_outer_blob*>(buff.data());
 
       if (blob.m_ver > CRYPTONOTE_PUBLIC_ADDRESS_TEXTBLOB_VER) {
-        LOG_PRINT_L1("Wrong address format");
+        LOG_PRINT_L1("Unknown version of public address: " << blob.m_ver << ", expected " << CRYPTONOTE_PUBLIC_ADDRESS_TEXTBLOB_VER);
         return false;
       }
 
       if (blob.check_sum != get_account_address_checksum(blob)) {
-        LOG_PRINT_L1("Invalid checksum");
+        LOG_PRINT_L1("Wrong public address checksum");
         return false;
       }
 
+      // We success
       info.address = blob.m_address;
       info.is_subaddress = false;
       info.has_payment_id = false;
-
-      if (!crypto::check_key(info.address.m_spend_public_key) || !crypto::check_key(info.address.m_view_public_key)) {
-        LOG_PRINT_L1("Failed to validate address keys");
-        return false;
-      }
     }
-
     return true;
   }
-  //-----------------------------------------------------------------------
+  //--------------------------------------------------------------------------------
   bool get_account_address_from_str_or_url(
       address_parse_info& info
     , network_type nettype
     , const std::string& str_or_url
-    , std::function<std::string(const std::string&)> dns_confirm
+    , std::function<std::string(const std::string&, const std::vector<std::string>&, bool)> dns_confirm
     )
   {
     if (get_account_address_from_str(info, nettype, str_or_url)) {
       return true;
     }
-
-    std::vector<std::string> addresses = { str_or_url };
-    if (!tools::dns_utils::load_txt_records_from_dns(addresses, addresses)) {
-      return false;
-    }
-
-    for (const auto& addr : addresses) {
-      if (get_account_address_from_str(info, nettype, addr)) {
-        return true;
-      }
-    }
-
-    return false;
+    bool dnssec_valid;
+    std::string address_str = tools::dns_utils::get_account_address_as_str_from_url(str_or_url, dnssec_valid, dns_confirm);
+    return !address_str.empty() &&
+      get_account_address_from_str(info, nettype, address_str);
   }
-
+  //--------------------------------------------------------------------------------
   bool operator ==(const cryptonote::transaction& a, const cryptonote::transaction& b) {
     return cryptonote::get_transaction_hash(a) == cryptonote::get_transaction_hash(b);
   }
 
   bool operator ==(const cryptonote::block& a, const cryptonote::block& b) {
     return cryptonote::get_block_hash(a) == cryptonote::get_block_hash(b);
-  }
-
-  bool construct_miner_tx(
-    size_t height,
-    size_t median_weight,
-    uint64_t already_generated_coins,
-    size_t current_block_weight,
-    uint64_t fee,
-    const account_public_address& miner_address,
-    transaction& tx,
-    const blobdata& extra_nonce,
-    size_t max_outs,
-    uint8_t hf_version
-  ) {
-    tx.vin.clear();
-    tx.vout.clear();
-    tx.extra.clear();
-
-    keypair txkey = keypair::generate(hw::get_device("default"));
-    add_tx_pub_key_to_extra(tx, txkey.pub);
-    if (!extra_nonce.empty())
-      if (!add_extra_nonce_to_tx_extra(tx.extra, extra_nonce))
-        return false;
-
-    txin_gen in;
-    in.height = height;
-    tx.vin.push_back(in);
-
-    uint64_t block_reward;
-    if (!get_block_reward(median_weight, current_block_weight, already_generated_coins, block_reward, hf_version)) {
-      LOG_PRINT_L0("Block is too big");
-      return false;
-    }
-
-    block_reward += fee;
-
-    std::vector<uint64_t> out_amounts;
-    decompose_amount_into_digits(block_reward, 0,
-      [&out_amounts](uint64_t a_chunk) { out_amounts.push_back(a_chunk); },
-      [](uint64_t) {});
-
-    const uint8_t HF_VERSION_REDUCED_BLOCK_REWARD = 10; // Example version, change as needed
-    if (max_outs != 0 && hf_version >= HF_VERSION_REDUCED_BLOCK_REWARD) {
-      while (out_amounts.size() > max_outs) {
-        out_amounts[out_amounts.size() - 2] += out_amounts.back();
-        out_amounts.pop_back();
-      }
-    }
-
-    uint64_t summary_amounts = 0;
-    for (auto &da : out_amounts) {
-      summary_amounts += da;
-      txout_to_key tk;
-      tk.key = rct::rct2pk(rct::scalarmultKey(rct::pk2rct(miner_address.m_spend_public_key), rct::sk2rct(txkey.sec)));
-      tx_out out;
-      out.amount = da;
-      out.target = tk;
-      tx.vout.push_back(out);
-    }
-
-    if (summary_amounts != block_reward) {
-      LOG_PRINT_L0("Decomposed amounts sum is not equal to expected amount: " << summary_amounts << " != " << block_reward);
-      return false;
-    }
-
-    tx.version = CURRENT_TRANSACTION_VERSION;
-    tx.unlock_time = height + CRYPTONOTE_MINED_MONEY_UNLOCK_WINDOW;
-    return true;
   }
 }
 

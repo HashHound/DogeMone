@@ -46,7 +46,7 @@ using namespace epee;
 #include "multisig/multisig.h"
 #include "common/dns_utils.h"
 #include "common/base58.h"
-#include "common/util.h"
+#include "common/int-util.h"
 #include "cryptonote_format_utils.h"
 
 

@@ -36,7 +36,7 @@
 #include "cryptonote_basic.h"
 #include "crypto/crypto.h"
 #include "crypto/hash.h"
-#include "cryptonote_basic/blobdatatype.h"
+#include "common/types.h"
 
 namespace cryptonote {
   /************************************************************************/
@@ -113,7 +113,7 @@ namespace cryptonote {
     , const std::string& str
     );
 
-  bool construct_miner_tx(size_t height, size_t median_size, uint64_t already_generated_coins, size_t current_block_size, uint64_t fee, const account_public_address &miner_address, transaction &tx, const blobdata& extra_nonce, size_t max_outs, uint8_t hf_version);
+  bool construct_miner_tx(size_t height, size_t median_size, uint64_t already_generated_coins, size_t current_block_size, uint64_t fee, const account_public_address &miner_address, transaction &tx, const blobdata& extra_nonce);
   bool get_account_address_from_str_or_url(
       address_parse_info& info
     , network_type nettype
