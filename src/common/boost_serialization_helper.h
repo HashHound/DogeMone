@@ -30,6 +30,8 @@
 
 #pragma once
 
+#include <boost/version.hpp>
+#include <boost/filesystem.hpp>
 #include <boost/archive/binary_iarchive.hpp>
 #include <boost/archive/portable_binary_oarchive.hpp>
 #include <boost/archive/portable_binary_iarchive.hpp>
@@ -93,43 +95,43 @@ namespace tools
   }
 
   template<class t_object>
-  bool unserialize_obj_from_file(t_object& obj, const std::string& file_path)
-  {
-    TRY_ENTRY();
+bool unserialize_obj_from_file(t_object& obj, const std::string& file_path)
+{
+  TRY_ENTRY();
 
-    std::ifstream data_file;
+  std::ifstream data_file;
+  data_file.open(file_path, std::ios_base::binary | std::ios_base::in);
+  if(data_file.fail())
+    return false;
+
+  try
+  {
+    // first try reading in portable mode
+    boost::archive::portable_binary_iarchive a(data_file);
+    a >> obj;
+  }
+  catch(...)
+  {
+    // if failed, try reading in unportable mode
+
+    // Conditionally compile based on Boost version
+#if BOOST_VERSION >= 105600
+    boost::filesystem::copy_file(file_path, file_path + ".unportable", boost::filesystem::copy_option::overwrite_if_exists);
+#else
+    boost::filesystem::copy_file(file_path, file_path + ".unportable", boost::filesystem::overwrite_if_exists);
+#endif
+
+    data_file.close();
     data_file.open(file_path, std::ios_base::binary | std::ios_base::in);
     if(data_file.fail())
       return false;
 
-    try
-    {
-      // first try reading in portable mode
-      boost::archive::portable_binary_iarchive a(data_file);
-      a >> obj;
-    }
-    catch(...)
-    {
-      // if failed, try reading in unportable mode
-
-      // Conditionally compile based on Boost version
-  #if BOOST_VERSION >= 105600
-      boost::filesystem::copy_file(file_path, file_path + ".unportable", boost::filesystem::copy_options::overwrite_existing);
-  #else
-      boost::filesystem::copy_file(file_path, file_path + ".unportable", boost::filesystem::overwrite_if_exists);
-  #endif
-
-      data_file.close();
-      data_file.open(file_path, std::ios_base::binary | std::ios_base::in);
-      if(data_file.fail())
-        return false;
-
-      boost::archive::binary_iarchive a(data_file);
-      a >> obj;
-    }
-
-    return !data_file.fail();
-    CATCH_ENTRY_L0("unserialize_obj_from_file", false);
+    boost::archive::binary_iarchive a(data_file);
+    a >> obj;
   }
 
-  }
+  return !data_file.fail();
+  CATCH_ENTRY_L0("unserialize_obj_from_file", false);
+}
+
+} // namespace tools
