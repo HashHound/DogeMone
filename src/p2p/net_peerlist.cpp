@@ -25,7 +25,6 @@
 // INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
 // STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
 // THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 #include "net_peerlist.h"
 
 #include <algorithm>
@@ -41,7 +40,6 @@
 #include <boost/serialization/version.hpp>
 
 #include "net_peerlist_boost_serialization.h"
-
 
 namespace nodetool
 {
@@ -199,7 +197,11 @@ namespace nodetool
     if (!out)
     {
       // if failed, try reading in unportable mode
-      boost::filesystem::copy_file(path, path + ".unportable", boost::filesystem::copy_options::overwrite_existing);
+#if BOOST_VERSION >= 105600
+      boost::filesystem::copy_file(path, path + ".unportable", boost::filesystem::copy_option::overwrite_if_exists);
+#else
+      boost::filesystem::copy_file(path, path + ".unportable", boost::filesystem::copy_option::overwrite_if_exists);
+#endif
       src_file.close();
       src_file.open( path , std::ios_base::binary | std::ios_base::in);
       if(src_file.fail())
