@@ -63,7 +63,7 @@
 #define CRYPTONOTE_COINBASE_BLOB_RESERVED_SIZE          600
 #define CRYPTONOTE_DISPLAY_DECIMAL_POINT                12
 // COIN - number of smallest units in one coin
-#define COIN                                            ((uint64_t)1000000000000) // pow(10, 12)
+#define COIN                                            ((uint64_t)10000000000) // pow(10, 12)
 
 #define FEE_PER_KB_OLD                                  ((uint64_t)10000000000) // pow(10, 10)
 #define FEE_PER_KB                                      ((uint64_t)2000000000) // 2 * pow(10, 9)
@@ -196,7 +196,7 @@ namespace config
       0xA1 ,0x32, 0x13, 0x70 , 0x51, 0x04 , 0x23, 0x60, 0x17, 0x32, 0xA1, 0x81, 0x16, 0x32, 0xA1, 0x12
     } }; // Bender's nightmare
   std::string const GENESIS_TX = "023c01ff0001ffffffffffff07020bf6522f9152fa26cd1fc5c022b1a9e13dab697f3acf4b4d0ca6950a867a194321011d92826d0656958865a035264725799f39f6988faa97d532f972895de849496d00";
-  uint32_t const GENESIS_NONCE = 10005;
+  uint32_t const GENESIS_NONCE = 10000;
 
   // Hash domain separators
   const char HASH_KEY_BULLETPROOF_EXPONENT[] = "bulletproof";
@@ -222,7 +222,7 @@ namespace config
         0xA2 ,0x39, 0x23, 0x70 , 0x61, 0x04 , 0x41, 0x60, 0x17, 0x32, 0x00, 0x81, 0x16, 0xA1, 0xA1, 0x10
       } }; // Bender's daydream
     std::string const GENESIS_TX = "023c01ff0001ffffffffffff07020bf6522f9152fa26cd1fc5c022b1a9e13dab697f3acf4b4d0ca6950a867a194321011d92826d0656958865a035264725799f39f6988faa97d532f972895de849496d00";
-    uint32_t const GENESIS_NONCE = 10006;
+    uint32_t const GENESIS_NONCE = 10001;
   }
 
   namespace stagenet
@@ -237,7 +237,7 @@ namespace config
         0xA4 ,0x39, 0x23, 0x70 , 0x61, 0x04 , 0x41, 0x60, 0x17, 0x32, 0x00, 0x81, 0x16, 0xA1, 0xA1, 0x10
       } }; // Bender's daydream
     std::string const GENESIS_TX = "023c01ff0001ffffffffffff07020bf6522f9152fa26cd1fc5c022b1a9e13dab697f3acf4b4d0ca6950a867a194321011d92826d0656958865a035264725799f39f6988faa97d532f972895de849496d00";
-    uint32_t const GENESIS_NONCE = 10007;
+    uint32_t const GENESIS_NONCE = 10002;
   }
 }
 
