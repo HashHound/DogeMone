@@ -197,11 +197,11 @@ namespace nodetool
     if (!out)
     {
       // if failed, try reading in unportable mode
-#if BOOST_VERSION >= 105600
-      boost::filesystem::copy_file(path, path + ".unportable", boost::filesystem::copy_option::overwrite_if_exists);
-#else
-      boost::filesystem::copy_file(path, path + ".unportable", boost::filesystem::copy_option::overwrite_if_exists);
-#endif
+      #if BOOST_VERSION >= 105600
+          boost::filesystem::copy_file(path, path + ".unportable", boost::filesystem::copy_options::overwrite_existing);
+      #else
+          boost::filesystem::copy_file(path, path + ".unportable", boost::filesystem::overwrite_if_exists);
+      #endif
       src_file.close();
       src_file.open( path , std::ios_base::binary | std::ios_base::in);
       if(src_file.fail())
